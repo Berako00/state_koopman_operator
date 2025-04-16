@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class AUTOENCODER(nn.Module):
-    def __init__(self, Num_meas, Num_inputs, Num_x_Obsv, Num_x_Neurons, Num_u_Obsv, Num_u_Neurons, Num_hidden_x_encoder, Num_hidden_u_encoder, Num_hidden_u_decoder):
+    def __init__(self, Num_meas, Num_inputs, Num_x_Obsv, Num_x_Neurons, Num_u_Neurons, Num_hidden_x_encoder, Num_hidden_u_encoder):
 
         super(AUTOENCODER, self).__init__()
         self.num_meas = Num_meas
@@ -14,15 +14,11 @@ class AUTOENCODER(nn.Module):
 
         self.x_Koopman = nn.Linear(Num_x_Obsv + Num_meas, Num_x_Obsv + Num_meas, bias=False)
 
-        self.u_Encoder_In = nn.Linear(Num_meas + Num_inputs, Num_u_Neurons)
+        self.u_Encoder_In = nn.Linear(Num_meas, Num_u_Neurons)
         self.u_encoder_hidden = nn.ModuleList([nn.Linear(Num_u_Neurons, Num_u_Neurons) for _ in range(Num_hidden_u_encoder)])
-        self.u_Encoder_out = nn.Linear(Num_u_Neurons, Num_u_Obsv)
+        self.u_Encoder_out = nn.Linear(Num_u_Neurons, Num_inputs)
 
-        self.u_Koopman = nn.Linear(Num_u_Obsv, Num_x_Obsv + Num_meas, bias=False)
-
-        self.u_Decoder_In = nn.Linear(Num_u_Obsv + Num_meas, Num_u_Neurons)
-        self.u_decoder_hidden = nn.ModuleList([nn.Linear(Num_u_Neurons, Num_u_Neurons) for _ in range(Num_hidden_u_decoder)])
-        self.u_Decoder_out = nn.Linear(Num_u_Neurons, Num_inputs)
+        self.u_Koopman = nn.Linear(Num_inputs, Num_x_Obsv + Num_meas, bias=False)
 
         self._init_weights()
 
@@ -55,16 +51,10 @@ class AUTOENCODER(nn.Module):
     def u_Koopman_op(self, x):
         return self.u_Koopman(x)
 
-    def u_Decoder(self, x):
-        x = F.relu(self.u_Decoder_In(x))
-        for layer in self.u_decoder_hidden:
-            x = F.relu(layer(x))
-        x = self.u_Decoder_out(x)
-        return x
-
     def forward(self, x_k):
         y_k = self.x_Encoder(x_k)
         v_k = self.u_Encoder(x_k)
-        y_k1 = self.x_Koopman_op(y_k) + self.u_Koopman_op(v_k)
+        uv_k = x_k[:, self.num_meas:] * v_k
+        y_k1 = self.x_Koopman_op(y_k) + self.u_Koopman_op(uv_k)
         x_k1 = y_k1[:, :self.num_meas]
         return x_k1
