@@ -135,9 +135,7 @@ if use_ga:
 
 
 
-model = AUTOENCODER(Num_meas, Num_inputs, Num_x_Obsv, Num_x_Neurons,
-                    Num_u_Obsv, Num_u_Neurons, Num_hidden_x,
-                    Num_hidden_u, Num_hidden_u)
+model = AUTOENCODER(Num_meas, Num_inputs, Num_x_Obsv, Num_x_Neurons, Num_u_Neurons, Num_hidden_x_encoder, Num_hidden_u_encoder)
 
 # Training Loop Parameters
 start_training_time = time.time()
