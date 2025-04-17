@@ -2,6 +2,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 import torch.optim as optim
 import os
+import torch.nn as nn
 
 from help_func import self_feeding, enc_self_feeding, set_requires_grad, get_model_path, enc_self_feeding_uf, load_model
 from loss_func import total_loss, total_loss_forced, total_loss_unforced
