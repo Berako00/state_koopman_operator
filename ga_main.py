@@ -102,9 +102,9 @@ elif system == 'two_link':
 
 
 # ---- Define last training param -------
-eps_final = 5000      # Number of epochs for final training
+eps_final = 5      # Number of epochs for final training
 breakout = 10
-check_epoch = 10
+check_epoch = 1
 lr = 1e-3       # Learning rate
 batch_size = 256
 S_p = 30
