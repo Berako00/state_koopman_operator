@@ -5,6 +5,9 @@ import torch.nn as nn
 
 from loss_func import custom_loss
 
+def _unwrap(model):
+    return model.module if isinstance(model, nn.DataParallel) else model
+    
 def get_model_path(i):
     windows_dir1 = r"C:\Users\jokin\Desktop\Uni\Aalborg\Master\Masters_Thesis"
     windows_dir2 = r"C:\Users\Labuser\Desktop\WAPNN"
@@ -62,6 +65,7 @@ def self_feeding(model, xuk, Num_meas):
 
 
 def enc_self_feeding(model, xuk, Num_meas):
+    model = _unwrap(model)
     x_k = xuk[:, 0, :Num_meas]
     u = xuk[:, :, Num_meas:]
 
@@ -104,7 +108,6 @@ def enc_self_feeding_uf(model, xuk, Num_meas):
 def load_model(model, path, device = None):
       checkpoint = torch.load(path, map_location=device)
       state_dict = checkpoint.get('state_dict', checkpoint)
-      model.load_state_dict(state_dict)
       if isinstance(model, nn.DataParallel):
          model.module.load_state_dict(state_dict)
       else:
