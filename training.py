@@ -45,6 +45,11 @@ def trainingfcn(eps, check_epoch, lr, batch_size, S_p, T, dt, alpha, Num_meas, N
                           Num_x_Neurons, Num_u_Obsv, Num_u_Neurons,
                           Num_hidden_x_encoder,
                           Num_hidden_u_encoder, Num_hidden_u_decoder).to(device)
+    
+      # --- Multi-GPU Support via DataParallel ---
+      if torch.cuda.device_count() > 1:
+          print(f"Using {torch.cuda.device_count()} GPUs with DataParallel.")
+          model = nn.DataParallel(model)
 
       optimizer = optim.Adam(model.parameters(), lr=lr)
 
@@ -89,7 +94,10 @@ def trainingfcn(eps, check_epoch, lr, batch_size, S_p, T, dt, alpha, Num_meas, N
               # If test loss is lower than the one from the previous checkpoint, save the model.
               if test_running_loss < best_test_loss_checkpoint:
                   best_test_loss_checkpoint = test_running_loss
-                  checkpoint = {'state_dict': model.state_dict(), **hyperparams}
+                  # If wrapped in DataParallel, pull out the .module sub‐module
+                  sd = model.module.state_dict() if isinstance(model, nn.DataParallel) else model.state_dict()
+
+                  checkpoint = {'state_dict': sd, **hyperparams}
                   torch.save(checkpoint, model_path_i)
                   print(f'Checkpoint at Epoch {e+1}: New best test loss, model saved.')
 
