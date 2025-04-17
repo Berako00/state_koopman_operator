@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 import os
+import torch.nn as nn
 
 from loss_func import custom_loss
 
@@ -102,11 +103,12 @@ def enc_self_feeding_uf(model, xuk, Num_meas):
     
 def load_model(model, path, device = None):
       checkpoint = torch.load(path, map_location=device)
-      if 'state_dict' in checkpoint:
-          state_dict = checkpoint['state_dict']
-      else:
-          state_dict = checkpoint
+      state_dict = checkpoint.get('state_dict', checkpoint)
       model.load_state_dict(state_dict)
+      if isinstance(model, nn.DataParallel):
+         model.module.load_state_dict(state_dict)
+      else:
+         model.load_state_dict(state_dict)
       model.eval()
 
 def load_parameters(path, device = None):
