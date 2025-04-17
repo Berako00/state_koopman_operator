@@ -1,11 +1,16 @@
 import torch
 import torch.nn.functional as F
+import torch.nn as nn
+
+def _unwrap(model):
+    return model.module if isinstance(model, nn.DataParallel) else model
 
 def custom_loss(x_pred, x_target):
     total_custom_loss = torch.sum(torch.mean((x_pred - x_target) ** 2))
     return total_custom_loss
 
 def loss_2(xuk, Num_meas, model):
+  model = _unwrap(model)
   total_g_loss = torch.tensor(0.0, device=xuk[:, 0, :].device)
   for m in range(0,len(xuk[0, :, 0])):
     v = model.u_Encoder(xuk[:, m, :])
@@ -16,11 +21,13 @@ def loss_2(xuk, Num_meas, model):
   return L_2
 
 def loss_4(xuk, Num_meas, model):
+    model = _unwrap(model)
     pred_4 = model.x_Koopman_op(model.x_Encoder(xuk[:, 0, :Num_meas])) + model.u_Koopman_op(model.u_Encoder(xuk[:, 0, :]))
     L_4 = F.mse_loss(pred_4, model.x_Encoder(xuk[:, 1, :Num_meas]), reduction='mean')
     return L_4, pred_4
 
 def loss_6(xuk, Num_meas, Num_x_Obsv, T, L_4, pred_4, model):
+    model = _unwrap(model)
     u = xuk[:, :, Num_meas:]
     total_6_loss = L_4
     y_k = pred_4
@@ -36,6 +43,7 @@ def loss_6(xuk, Num_meas, Num_x_Obsv, T, L_4, pred_4, model):
     return L_6
 
 def total_loss(alpha, xuk, Num_meas, Num_x_Obsv, T, S_p, model):
+    model = _unwrap(model)
     L_gu = loss_2(xuk, Num_meas, model)
     [L_4, pred_4]  = loss_4(xuk, Num_meas, model)
     L_6 = loss_6(xuk, Num_meas, Num_x_Obsv, T, L_4, pred_4, model)
